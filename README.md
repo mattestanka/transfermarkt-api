@@ -1,6 +1,6 @@
 # transfermarkt-api
 
-This is my fork of [felipeall/transfermarkt-api](https://github.com/felipeall/transfermarkt-api). I've fixed a regex error for age and birthdate parsing and migrated the project to use [uv](https://docs.astral.sh/uv/).
+This is my fork of [felipeall/transfermarkt-api](https://github.com/felipeall/transfermarkt-api). I've fixed a regex error for age and birthdate parsing and migrated the project to use [uv](https://docs.astral.sh/uv/). Other than that I have implemented some of the pull requests that were open on the main repo.
 
 This project provides a lightweight and easy-to-use interface for extracting data from [Transfermarkt](https://www.transfermarkt.com/) by applying web scraping processes and offering a RESTful API service via FastAPI. With this service, developers can seamlessly integrate Transfermarkt data into their applications, websites, or data analysis pipelines.
 
