@@ -15,7 +15,7 @@ Interactive API documentation (Swagger UI): https://transfermarkt-api.fly.dev/
 ### Running Locally
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR-USERNAME/transfermarkt-api.git
+git clone https://github.com/mattestanka/transfermarkt-api.git
 
 # Navigate to the project directory
 cd transfermarkt-api
@@ -36,7 +36,7 @@ open http://localhost:8000/
 ### Running via Docker
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR-USERNAME/transfermarkt-api.git
+git clone https://github.com/mattestanka/transfermarkt-api.git
 
 # Navigate to the project directory
 cd transfermarkt-api
