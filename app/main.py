@@ -1,4 +1,5 @@
 import uvicorn
+import argparse  # Import the argparse library
 from fastapi import FastAPI
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -27,4 +28,12 @@ def docs_redirect():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    parser = argparse.ArgumentParser(description="Run the Transfermarkt API")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="The port to run the server on (default: 8000)",
+    )
+    args = parser.parse_args()
+    uvicorn.run("app.main:app", host="0.0.0.0", port=args.port, reload=True)
