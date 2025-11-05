@@ -59,7 +59,7 @@ def trim(text: Union[list, str]) -> str:
     if isinstance(text, list):
         text = "".join(text)
 
-    return text.strip().replace("\xa0", "")
+    return text.strip().replace("\xa0", " ")
 
 
 def safe_regex(text: Optional[Union[str, list]], regex, group: str) -> Optional[str]:

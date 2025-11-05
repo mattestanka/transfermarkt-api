@@ -113,5 +113,4 @@ class TransfermarktPlayerProfile(TransfermarktBase):
             "position": self.get_text_by_xpath(Players.Profile.TRAINER_PROFILE_POSITION),
         }
         self.response["relatives"] = self.__parse_player_relatives()
-
         return self.response
