@@ -26,8 +26,8 @@ uv sync
 # Start the API server (default port: 8000)
 uv run python -m app.main
 
-# Or specify a custom port
-uv run python -m app.main --port 8080
+# Or specify custom options
+uv run python -m app.main --port 8080 --timeout 15 --rate-limit 1.0 --max-retries 3
 
 # Access the API
 open http://localhost:8000/
@@ -53,17 +53,36 @@ open http://localhost:8000/
 
 ## Configuration
 
+### Command-Line Options
+
+| Option            | Description                                                  | Default |
+|-------------------|--------------------------------------------------------------|---------|
+| `--port`          | Port to run the server on                                    | `8000`  |
+| `--timeout`       | Request timeout in seconds (for Transfermarkt scraping)     | `10`    |
+| `--rate-limit`    | Minimum seconds between requests to Transfermarkt            | `0.5`   |
+| `--max-retries`   | Maximum number of retries for failed requests                | `2`     |
+
 ### Environment Variables
 
-| Variable                  | Description                                               | Default      |
-|---------------------------|-----------------------------------------------------------|--------------|
-| `RATE_LIMITING_ENABLE`    | Enable rate limiting feature for API calls                | `false`      |
+| Variable                  | Description                                                  | Default      |
+|---------------------------|--------------------------------------------------------------|--------------|
+| `RATE_LIMITING_ENABLE`    | Enable rate limiting feature for API endpoints               | `false`      |
 | `RATE_LIMITING_FREQUENCY` | Delay allowed between each API call (see [slowapi](https://slowapi.readthedocs.io/en/latest/)) | `2/3seconds` |
+| `REQUEST_TIMEOUT`         | Request timeout in seconds (for Transfermarkt scraping)     | `10`         |
+| `REQUEST_RATE_LIMIT`      | Minimum seconds between requests to Transfermarkt            | `0.5`        |
+| `REQUEST_MAX_RETRIES`     | Maximum number of retries for failed requests                | `2`          |
+
+**Note:** Command-line options take precedence over environment variables.
 
 ## Changes from Original
 
 - Fixed regex error in age and birthdate parsing
 - Migrated from Poetry to [uv](https://docs.astral.sh/uv/) for dependency management
+- Added request timeout to prevent indefinite hangs
+- Implemented connection pooling for better performance
+- Added rate limiting for Transfermarkt requests to avoid overloading their servers
+- Implemented automatic retry logic for failed requests
+- Added command-line options for runtime configuration
 
 ## Credits
 

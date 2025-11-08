@@ -35,5 +35,32 @@ if __name__ == "__main__":
         default=8000,
         help="The port to run the server on (default: 8000)",
     )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=10,
+        help="Request timeout in seconds (default: 10)",
+    )
+    parser.add_argument(
+        "--rate-limit",
+        type=float,
+        default=0.5,
+        help="Minimum seconds between requests to Transfermarkt (default: 0.5)",
+    )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=2,
+        help="Maximum number of retries for failed requests (default: 2)",
+    )
     args = parser.parse_args()
+
+    # Update settings with command-line arguments
+    settings.REQUEST_TIMEOUT = args.timeout
+    settings.REQUEST_RATE_LIMIT = args.rate_limit
+    settings.REQUEST_MAX_RETRIES = args.max_retries
+
+    print(f"Starting Transfermarkt API on port {args.port}")
+    print(f"Settings: timeout={args.timeout}s, rate_limit={args.rate_limit}s, max_retries={args.max_retries}")
+
     uvicorn.run("app.main:app", host="0.0.0.0", port=args.port, reload=True)

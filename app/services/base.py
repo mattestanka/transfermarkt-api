@@ -1,15 +1,67 @@
 from dataclasses import dataclass, field
 from typing import Optional
 from xml.etree import ElementTree
+import time
 
 import requests
 from bs4 import BeautifulSoup
 from fastapi import HTTPException
 from lxml import etree
 from requests import Response, TooManyRedirects
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
+from app.settings import settings
 from app.utils.utils import trim
 from app.utils.xpath import Pagination
+
+
+# Create a shared session with connection pooling and retry strategy
+def create_session() -> requests.Session:
+    """
+    Create a requests Session with connection pooling and retry strategy.
+
+    Returns:
+        requests.Session: A configured session object with retry strategy.
+    """
+    session = requests.Session()
+
+    # Configure retry strategy
+    retry_strategy = Retry(
+        total=settings.REQUEST_MAX_RETRIES,
+        backoff_factor=1,  # Wait 1s, 2s, 4s between retries
+        status_forcelist=[429, 500, 502, 503, 504],  # Retry on these status codes
+        allowed_methods=["HEAD", "GET", "OPTIONS"]  # Only retry on safe methods
+    )
+
+    # Mount adapter with retry strategy
+    adapter = HTTPAdapter(
+        max_retries=retry_strategy,
+        pool_connections=10,
+        pool_maxsize=20
+    )
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    return session
+
+
+# Shared session for all requests (lazy initialization)
+_session = None
+_last_request_time = 0  # Track last request time for rate limiting
+
+
+def get_session() -> requests.Session:
+    """
+    Get or create the shared session object.
+
+    Returns:
+        requests.Session: The shared session object.
+    """
+    global _session
+    if _session is None:
+        _session = create_session()
+    return _session
 
 
 @dataclass
@@ -30,7 +82,7 @@ class TransfermarktBase:
 
     def make_request(self, url: Optional[str] = None) -> Response:
         """
-        Make an HTTP GET request to the specified URL.
+        Make an HTTP GET request to the specified URL with timeout, rate limiting, and connection pooling.
 
         Args:
             url (str, optional): The URL to make the request to. If not provided, the class's URL
@@ -40,12 +92,23 @@ class TransfermarktBase:
             Response: An HTTP Response object containing the server's response to the request.
 
         Raises:
-            HTTPException: If there are too many redirects, or if the server returns a client or
-                server error status code.
+            HTTPException: If there are too many redirects, timeout, connection error, or if the server
+                returns a client or server error status code.
         """
+        global _last_request_time
+
         url = self.URL if not url else url
+
+        # Rate limiting: ensure minimum time between requests
+        if settings.REQUEST_RATE_LIMIT > 0:
+            elapsed = time.time() - _last_request_time
+            if elapsed < settings.REQUEST_RATE_LIMIT:
+                sleep_time = settings.REQUEST_RATE_LIMIT - elapsed
+                time.sleep(sleep_time)
+
         try:
-            response: Response = requests.get(
+            session = get_session()
+            response: Response = session.get(
                 url=url,
                 headers={
                     "User-Agent": (
@@ -55,13 +118,24 @@ class TransfermarktBase:
                         "Safari/537.36"
                     ),
                 },
+                timeout=settings.REQUEST_TIMEOUT,
+            )
+            _last_request_time = time.time()
+
+        except requests.exceptions.Timeout:
+            raise HTTPException(
+                status_code=504,
+                detail=f"Request timeout after {settings.REQUEST_TIMEOUT}s for url: {url}"
             )
         except TooManyRedirects:
-            raise HTTPException(status_code=404, detail=f"Not found for url: {url}")
-        except ConnectionError:
-            raise HTTPException(status_code=500, detail=f"Connection error for url: {url}")
+            raise HTTPException(status_code=404, detail=f"Too many redirects for url: {url}")
+        except requests.exceptions.ConnectionError as e:
+            raise HTTPException(status_code=503, detail=f"Connection error for url: {url}. {str(e)}")
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f"Request error for url: {url}. {str(e)}")
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error for url: {url}. {e}")
+            raise HTTPException(status_code=500, detail=f"Unexpected error for url: {url}. {str(e)}")
+
         if 400 <= response.status_code < 500:
             raise HTTPException(
                 status_code=response.status_code,
