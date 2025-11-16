@@ -96,7 +96,7 @@ class TransfermarktPlayerTransfers(TransfermarktBase):
                     "id": extract_from_url(transfer["to"]["href"]),
                     "name": transfer["to"]["clubName"],
                 },
-                "date": transfer["date"],
+                "date": transfer["dateUnformatted"],
                 "upcoming": transfer["upcoming"],
                 "season": transfer["season"],
                 "marketValue": transfer["marketValue"],

@@ -19,11 +19,13 @@ class TransfermarktClubPlayers(TransfermarktBase):
 
     club_id: str = None
     season_id: str = None
-    URL: str = "https://www.transfermarkt.com/-/kader/verein/{club_id}/saison_id/{season_id}/plus/1"
+    URL: str = "https://www.transfermarkt.com/-/kader/verein/{club_id}/plus/1/galerie/0"
 
     def __post_init__(self) -> None:
         """Initialize the TransfermarktClubPlayers class."""
-        self.URL = self.URL.format(club_id=self.club_id, season_id=self.season_id)
+        self.URL = self.URL.format(club_id=self.club_id)
+        if self.season_id:
+            self.URL += f"?saison_id={self.season_id}"
         self.page = self.request_url_page()
         self.raise_exception_if_not_found(xpath=Clubs.Players.CLUB_NAME)
         self.__update_season_id()
