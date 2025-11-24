@@ -30,8 +30,17 @@ class TransfermarktBaseModel(BaseModel):
         check_fields=False,
     )
     def parse_str_to_date(cls, v: str):
+        if not v:
+            return None
+
         try:
-            return parser.parse(v).date() if v else None
+            # If already in YYYY-MM-DD or YYYY/MM/DD format, parse without dayfirst
+            # to avoid misinterpreting as YYYY-DD-MM
+            if re.match(r'^\d{4}[-/]\d{2}[-/]\d{2}$', v):
+                return parser.parse(v, dayfirst=False).date()
+
+            # Otherwise it's in DD/MM/YYYY format (European), parse with dayfirst=True
+            return parser.parse(v, dayfirst=True).date()
         except parser.ParserError:
             return None
 
